@@ -113,20 +113,6 @@ public static class Builder
             );
     }
 
-    private static string GetNameSpace(ISymbol typeSymbol, AttributeData? generationAttribute)
-    {
-        if (generationAttribute == null)
-        {
-            return typeSymbol.ContainingNamespace.ToDisplayString();
-        }
-
-        var customNs = generationAttribute.ConstructorArguments.FirstOrDefault().Value?.ToString();
-
-        return string.IsNullOrWhiteSpace(customNs)
-            ? typeSymbol.ContainingNamespace.ToDisplayString()
-            : customNs!;
-    }
-
     private static bool GetAsInternal(AttributeData? generationAttribute)
     {
         if (generationAttribute == null)
