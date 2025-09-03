@@ -44,14 +44,14 @@ public static class Builder
 
     public static string? GetInterfaceNameFor(ITypeSymbol typeSymbol)
     {
-        if (
-            typeSymbol.DeclaringSyntaxReferences.First().GetSyntax()
-                is not ClassDeclarationSyntax classSyntax
-            || typeSymbol is not INamedTypeSymbol
-        )
+        var declarationAndNamedTypeSymbol = GetClassDeclarationMetadata(typeSymbol);
+        if (declarationAndNamedTypeSymbol == null)
         {
             return null;
         }
+
+        var (classSyntax, _) = declarationAndNamedTypeSymbol.Value;
+
         var symbolDetails = GetSymbolDetails(typeSymbol, classSyntax);
 
         return $"global::{symbolDetails.NamespaceName}.{symbolDetails.InterfaceName}";
@@ -65,14 +65,14 @@ public static class Builder
         List<string> generatedInterfaceNames
     )
     {
-        if (
-            typeSymbol.DeclaringSyntaxReferences.First().GetSyntax()
-                is not ClassDeclarationSyntax classSyntax
-            || typeSymbol is not INamedTypeSymbol namedTypeSymbol
-        )
+        var declarationAndNamedTypeSymbol = GetClassDeclarationMetadata(typeSymbol);
+        if (declarationAndNamedTypeSymbol == null)
         {
             return string.Empty;
         }
+
+        var (classSyntax, namedTypeSymbol) = declarationAndNamedTypeSymbol.Value;
+
         var generationAttribute = GetGenerationAttribute(typeSymbol);
         var asInternal = GetAsInternal(generationAttribute);
         var symbolDetails = GetSymbolDetails(typeSymbol, classSyntax);
@@ -101,6 +101,23 @@ public static class Builder
         var generatedCode = interfaceGenerator.Build();
 
         return generatedCode;
+    }
+
+    private static (
+        ClassDeclarationSyntax Syntax,
+        INamedTypeSymbol NamedTypeSymbol
+    )? GetClassDeclarationMetadata(ITypeSymbol typeSymbol)
+    {
+        if (
+            typeSymbol.DeclaringSyntaxReferences.First().GetSyntax()
+                is not ClassDeclarationSyntax classSyntax
+            || typeSymbol is not INamedTypeSymbol namedTypeSymbol
+        )
+        {
+            return null;
+        }
+
+        return (classSyntax, namedTypeSymbol);
     }
 
     private static AttributeData? GetGenerationAttribute(ISymbol typeSymbol)
