@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -39,13 +40,19 @@ public class AutomaticInterfaceGenerator : IIncrementalGenerator
             return;
         }
 
+        var interfaceNames = enumerations
+            .Select(Builder.GetInterfaceNameFor)
+            .Where(name => name != null)
+            .Cast<string>()
+            .ToList();
+
         foreach (var type in enumerations)
         {
             var typeNamespace = type.ContainingNamespace.IsGlobalNamespace
                 ? $"${Guid.NewGuid()}"
                 : $"{type.ContainingNamespace}";
 
-            var code = Builder.BuildInterfaceFor(type);
+            var code = Builder.BuildInterfaceFor(type, interfaceNames);
 
             var hintName = $"{typeNamespace}.I{type.Name}";
             context.AddSource(hintName, code);
